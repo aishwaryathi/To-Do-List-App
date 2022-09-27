@@ -1,0 +1,152 @@
+//
+//  ContentView.swift
+//  To-Do List App
+//
+//  Created by Aishwarya on 7/27/22.
+//
+
+import SwiftUI
+
+
+struct ContentView: View {
+    @ObservedObject var myNotes: MyNotes
+    @State var searchString: String = " "
+    @State var newFolderName = " "
+    @State var showingPopover = false
+    var body: some View {
+        ZStack {
+            NavigationView {
+                    List {
+                        TextField("Search", text: $searchString)
+                        Section(header:
+                                    Text("On My iPhone")
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)) {
+                                        if myNotes.folders.count > 0 {
+                                            FolderCell(name: "Monday")
+                                            FolderCell(name: "Tuesday")
+                                            FolderCell(name: "Wednesday")
+                                            FolderCell(name: "Thursday")
+                                            FolderCell(name: "Friday")
+                                            FolderCell(name: "Saturday")
+                                            FolderCell(name: "Sunday")
+                                        }
+                                        
+                                        ForEach(myNotes.folders) {folder in FolderCell(name: folder.name)
+                        }
+                                        .onDelete(perform: { indexSet in myNotes.folders.remove(atOffsets: indexSet)
+                                            
+                                        })
+                        
+                        
+                }
+                                    .textCase(nil)
+                    
+            }
+            
+                    .listStyle(InsetGroupedListStyle())
+                    .navigationTitle("To-Do List")
+                    .toolbar {
+                        ToolbarItemGroup(placement: .navigationBarTrailing) {
+                            EditButton()
+                            
+                        }
+                        ToolbarItemGroup(placement: .bottomBar) {
+                            Image(systemName: "folder.badge.plus")
+                                .onTapGesture {
+                                    showingPopover.toggle()
+                                }
+                            Spacer()
+                            HStack {
+                                Text(" ")
+                                NavigationLink(destination: NoteView()) {
+                                Image(systemName: "square.and.pencil")
+                                }
+                            }
+                        }
+                    }
+        }
+            if showingPopover {
+                CreateNewFolder($showingPopover, with: myNotes)
+            }
+        }
+    }
+
+
+
+
+
+
+
+struct FolderCell: View {
+    var name: String
+    var body: some View {
+        NavigationLink(destination: FolderView(folderName: name)) {
+            HStack {
+                Image(systemName: "folder")
+                Text(name)
+            }
+        }
+    }
+}
+
+
+
+struct CreateNewFolder: View {
+    @ObservedObject var myNotes: MyNotes
+    @Binding var showingPopover: Bool
+    @State var newFolderName = " "
+    init(_ showingPopover: Binding<Bool>, with myNotes: MyNotes) {
+        self._showingPopover = showingPopover
+        self.myNotes = myNotes
+    }
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(Color(.systemGray4))
+                    .frame(width: 250, height: 150, alignment: .center)
+                VStack {
+                    Text("New Folder").font(.headline)
+                    Text("Enter a store name").font(.subheadline)
+                    Spacer()
+                    TextField("Name" , text: $newFolderName)
+                        .frame(width:150, height: 2)
+                        .padding()
+                        .background(Color(.white))
+                        .cornerRadius(7)
+                    Spacer()
+                    Color.gray.frame(width: 150, height: 1)
+                    HStack {
+                        Button(action: {print("Cancel")}) {
+                            Text("Cancel")
+                                .frame(maxWidth: .infinity)
+                        }
+                        Button(action: {
+                            myNotes.folders.append(Folder(name: newFolderName))
+                            showingPopover.toggle()
+                        }) {
+                            Text("Save")
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    
+                    
+                }
+                .frame(width: geo.size.width * 0.80, height: geo.size.width * 0.40)
+            }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+            
+        }
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        let testNotes = MyNotes()
+        testNotes.folders = testFolders
+        return ContentView(myNotes: testNotes)
+    }
+}
+}
